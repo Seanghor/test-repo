@@ -319,7 +319,6 @@
 
       @media (min-width: 940px) {
         .grid {
-          /* grid-template-columns: 1.15fr 0.85fr; */
           align-items: start;
         }
       }
@@ -537,7 +536,7 @@
         border-radius: 10px;
         border: 2px solid rgb(29 74 114 / 22%);
         /* padding: 12px; */
-        /* overflow: hidden; */
+        overflow: hidden;
         box-shadow: 0 2px 0px rgb(201 201 201 / 54%);
         border-bottom: 0;
       }
@@ -1538,7 +1537,6 @@
 
         let selected = { r: -1, c: -1 };
         let mistakes = 0;
-        let times = "3:15";
         let lastSelectedVal = 0;
 
         function toast(msg) {
@@ -1883,6 +1881,7 @@
 
         function setLevel(newLevel) {
           const unlocked = getUnlockedLevel();
+          //   const target = Math.min(100, Math.max(1, newLevel));
           const target = Math.min(100, Math.max(1, newLevel));
 
           if (target > unlocked) {
@@ -2323,7 +2322,7 @@
             startDaily();
           } else {
             const store = loadStore();
-            const startLevel = store?.free?.currentLevel || 1;
+            const startLevel = store?.free?.currentLevel || 0;
             setLevel(startLevel);
           }
         }
