@@ -457,9 +457,9 @@
       }
 
       .cell.selected {
-        outline: 4px solid rgba(26, 140, 255, 0.22);
-        border-color: rgba(26, 140, 255, 0.55);
-        background: rgba(26, 140, 255, 0.06);
+        border: 2px solid;
+        border-color: rgb(26 140 255 / 50%);
+        background: rgba(26, 140, 255, 0.1);
         color: rgb(57 163 255);
       }
 
@@ -534,6 +534,7 @@
         padding: 10px 10px;
         font-size: 14px;
         font-weight: 600;
+        max-width: 40px;
 
         /* border-radius: 0px; */
         /* border-radius: 16px; */
@@ -546,18 +547,18 @@
         /* background: rgba(204, 44, 44, 0.9); */
       }
 
-      .keypad > button:first-child {
+      /* .keypad > button:first-child {
         border-top-left-radius: 8px;
-      }
-      .keypad > button:nth-child(5) {
+      } */
+      /* .keypad > button:nth-child(5) {
         border-top-right-radius: 8px;
-      }
-      .keypad > button:nth-child(6) {
+      } */
+      /* .keypad > button:nth-child(6) {
         border-bottom-left-radius: 8px;
-      }
-      .keypad > button:last-child {
+      } */
+      /* .keypad > button:last-child {
         border-bottom-right-radius: 8px;
-      }
+      } */
 
       .mini {
         font-size: 12px;
@@ -910,6 +911,63 @@
         border-radius: 8px;
         font-weight: 600;
       }
+
+      /* @Difficulty */
+      .difficulty-tabs {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        user-select: none;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+
+      .difficulty-tabs .label {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .difficulty-tabs .tab {
+        background: transparent;
+        border: 0;
+        padding: 4px 4px;
+        font-weight: 500;
+        font-size: 13px;
+        color: #6f6d6d;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .difficulty-tabs .tab::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -4px;
+        height: 2px;
+        background: transparent;
+        border-radius: 2px;
+        transition: background 0.2s ease;
+      }
+
+      button.tab {
+        transition: all 0.5s;
+        border-radius: 3px;
+      }
+      button.tab:active {
+        transform: none;
+        box-shadow: none;
+        background-color: #5858582b;
+      }
+
+      .difficulty-tabs .tab.active {
+        color: #1a8cff;
+      }
+
+      .difficulty-tabs .tab.active::after {
+        background: #1a8cff;
+      }
     </style>
   </head>
 
@@ -932,20 +990,11 @@
             </div>
           </div>
 
-          <div class="game-config">
-            <select id="boardSize">
-              <option value="4">4 × 4</option>
-              <option value="6">6 × 6</option>
-              <option value="9" selected>9 × 9</option>
-            </select>
-
-            <div class="title">
-              <div>Difficulty</div>
-              <div id="level_string">Easy</div>
-              <!-- <h1 id="t_app">Chlat Kids Sudoku</h1> -->
-              <!-- <p id="t_sub">Levels + Daily Challenge — Khmer-first</p> -->
-            </div>
-          </div>
+          <select id="boardSize">
+            <option value="4">4 × 4</option>
+            <option value="6">6 × 6</option>
+            <option value="9" selected>9 × 9</option>
+          </select>
         </div>
       </header>
 
@@ -965,6 +1014,19 @@
                 </div>
               </div>
             </div>
+
+            <!-- difficulty -->
+            <div class="difficulty-tabs">
+              <span class="label">Difficulty:</span>
+              <button class="tab active" data-level="easy">Easy</button>
+              <button class="tab" data-level="normal">Normal</button>
+              <button class="tab" data-level="hard">Hard</button>
+            </div>
+
+            <!-- <div class="title">
+              <div>Difficulty</div>
+              <div id="level_string">Easy</div>
+            </div> -->
             <div
               class="board"
               role="application"
@@ -1094,7 +1156,7 @@
             streak: "Streak",
             sound: "Sound",
             level: "Level",
-            go: "Go",
+            go: "Play",
             tip: "Tip: Tap a white box, then choose a number. Green boxes are fixed.",
             rules: "Rules: No repeats in a row, column, or box.",
             integration1: "Offline ready:",
@@ -1131,6 +1193,7 @@
         const Sound = (() => {
           let enabled = true;
           let ctx = null;
+
           function beep(
             freq = 520,
             duration = 0.08,
@@ -1369,42 +1432,61 @@
         };
 
         // #Levels
-        function levelToSpec(level) {
-          if (level <= 30) {
-            const givens = Math.max(8, 12 - Math.floor((level - 1) / 5));
-            return { size: 4, label: "4×4", givens, uniqueness: true };
-          }
-          if (level <= 70) {
-            const step = level - 31;
-            const givens = Math.max(16, 22 - Math.floor(step / 6));
-            return { size: 6, label: "6×6", givens, uniqueness: true };
-          }
-          const step = level - 71;
-          const givens = Math.max(28, 36 - Math.floor(step / 5));
-          return { size: 9, label: "9×9", givens, uniqueness: true };
-        }
-        function specToDifficulty(size) {
-          if (size === 4) return "Easy";
-          if (size === 6) return "Normal";
-          return "Hard"; // 9×9 and fallback
-        }
-        function updateLevelStringFromSpec(level, spec) {
-          const el = document.getElementById("level_string");
-          if (!el) return;
+        function levelToSpec(size, difficulty = "easy", levelIndex = 1) {
+          if (![4, 6, 9].includes(size)) size = 4;
+          if (!["easy", "normal", "hard"].includes(difficulty))
+            difficulty = "easy";
 
-          const difficulty = specToDifficulty(spec.size);
-          el.textContent = `• ${difficulty}`;
+          const levels = DIFFICULTY_GIVENS[size][difficulty];
+
+          if (levelIndex < 1 || levelIndex > levels.length) levelIndex = 1;
+
+          const givens = levels[levelIndex - 1];
+          const label = `${size}×${size} • ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} • Level ${levelIndex}`;
+
+          return {
+            size,
+            label,
+            givens,
+            uniqueness: true,
+            levelIndex,
+            difficulty,
+          };
+        }
+
+        // --> #Handel save store
+        function saveProgress() {
+          const progress = {
+            currentSize,
+            currentDifficulty,
+            currentLevelIndex,
+          };
+          localStorage.setItem("sudokuProgress", JSON.stringify(progress));
+        }
+        function loadProgress() {
+          const progress = JSON.parse(localStorage.getItem("sudokuProgress"));
+          if (progress) {
+            currentSize = progress.currentSize || 4;
+            currentDifficulty = progress.currentDifficulty || "easy";
+            currentLevelIndex = progress.currentLevelIndex || 1;
+          }
+        }
+
+        function updateLevelStringFromSpec(level, spec) {
+          el.textContent = `•`;
           //   el.textContent = `Level ${level} • ${spec.label} • ${difficulty}`;
         }
 
-        function updateLevelString(level) {
+        function updateLevelString() {
           const el = document.getElementById("level_string");
           if (!el) return;
 
-          const { size, label } = levelToSpec(level);
-          const difficulty = specToDifficulty(size);
-
-          el.textContent = `Level ${level} • ${label} • ${difficulty}`;
+          const spec = levelToSpec(
+            currentSize,
+            currentDifficulty,
+            currentLevelIndex,
+          );
+          el.textContent = spec.label;
         }
 
         // Storage
@@ -1507,9 +1589,35 @@
         };
 
         // State
+        const DIFFICULTY_GIVENS = {
+          4: {
+            easy: [10, 10, 11, 10, 9, 10, 11, 10, 10, 9, 10, 11, 10, 10, 10],
+            normal: [8, 8, 9, 8, 7, 8, 9, 8, 8, 7, 8, 9, 8, 8, 8],
+            hard: [6, 6, 7, 6, 5, 6, 7, 6, 6, 5, 6, 7, 6, 6, 6],
+          },
+          6: {
+            easy: [20, 21, 19, 20, 21, 20, 20, 21, 19, 20, 20, 21, 20, 20, 21],
+            normal: [
+              16, 17, 15, 16, 17, 16, 16, 17, 15, 16, 16, 17, 16, 16, 17,
+            ],
+            hard: [12, 13, 11, 12, 13, 12, 12, 13, 11, 12, 12, 13, 12, 12, 13],
+          },
+          9: {
+            easy: [34, 35, 33, 34, 36, 34, 35, 33, 34, 35, 34, 36, 34, 35, 33],
+            normal: [
+              28, 29, 27, 28, 30, 28, 29, 27, 28, 29, 28, 30, 28, 29, 27,
+            ],
+            hard: [24, 25, 23, 24, 26, 24, 25, 23, 24, 25, 24, 26, 24, 25, 23],
+          },
+        };
+
         let lang = "en";
         let mode = "free"; // free | daily
-        let level = 1;
+        let maxLevel = 100; // if you have this
+
+        let currentSize = 4; // default 9x9
+        let currentDifficulty = "easy"; // default difficulty
+        let currentLevelIndex = 1;
 
         let cfg = ENGINE.config(4);
         let solution = null;
@@ -1659,12 +1767,19 @@
             el.keypad.appendChild(btn);
           }
 
+          // space
+          const spaceBtn = document.createElement("button");
+          spaceBtn.style.pointerEvents = "none";
+          if (N === 6) el.keypad.appendChild(spaceBtn);
+
           // erase button
           const erase = document.createElement("button");
           erase.textContent = "⌫";
           erase.className = "key erase";
           erase.addEventListener("click", eraseValue);
           el.keypad.appendChild(erase);
+          el.keypad.sty;
+          el.keypad.style.gridTemplateColumns = `repeat(${N === 4 ? 5 : N === 6 ? 4 : 5}, 1fr)`;
         }
 
         function getUnlockedLevel() {
@@ -1884,40 +1999,53 @@
           if (ENGINE.isSolved(grid, solution, cfg)) onWin();
         }
 
-        function setLevel(newLevel) {
-          const unlocked = getUnlockedLevel();
-          //   const target = Math.min(100, Math.max(1, newLevel));
-          const target = Math.min(100, Math.max(1, newLevel));
+        function setLevel(
+          size = currentSize,
+          difficulty = currentDifficulty,
+          levelIndex = currentLevelIndex,
+        ) {
+          currentSize = size;
+          currentDifficulty = difficulty;
+          currentLevelIndex = levelIndex;
 
-          if (target > unlocked) {
-            toast(I18N[lang].toastLocked);
-            Sound.bad();
-            return;
-          }
+          const spec = levelToSpec(
+            currentSize,
+            currentDifficulty,
+            currentLevelIndex,
+          );
 
-          level = target;
-
-          const spec = levelToSpec(level);
-          const { size, label, givens, uniqueness } = spec;
-
-          //  always update UI from spec
-          updateLevelStringFromSpec(level, spec);
-
-          if (el) {
-            const difficulty = specToDifficulty(size);
-
-            el.textContent = `Level ${level} • ${label} • ${difficulty}`;
-          }
-
-          // --- Game ---
           generateAndStartPuzzle({
-            size,
-            givensTarget: givens,
-            uniqueness,
+            size: spec.size,
+            givensTarget: spec.givens,
+            uniqueness: spec.uniqueness,
             seed: null,
           });
 
-          persist();
+          updateLevelString();
+          saveProgress();
+        }
+
+        function nextLevel() {
+          currentLevelIndex++;
+          if (currentLevelIndex > 15) currentLevelIndex = 1; // loop
+          setLevel(currentSize, currentDifficulty, currentLevelIndex);
+        }
+
+        function startPuzzle(size, difficulty) {
+          const givens = DIFFICULTY_GIVENS[size][difficulty];
+          if (!givens) {
+            console.warn(
+              `No mapping for size=${size} difficulty=${difficulty}`,
+            );
+            return;
+          }
+
+          generateAndStartPuzzle({
+            size,
+            givensTarget: givens,
+            uniqueness: true,
+            seed: null,
+          });
         }
 
         function switchMode(newMode) {
@@ -1946,10 +2074,6 @@
           const alreadyDone = s.completedDay === tk;
 
           const streakVal = s.streak || 0;
-          let size = 4;
-
-          if (streakVal >= 3) size = 6;
-          if (streakVal >= 7) size = 9;
 
           const givensTarget = size === 4 ? 10 : size === 6 ? 20 : 34;
           const seed = hashStringToSeed("chlat-daily-" + tk + "-size" + size);
@@ -2110,13 +2234,15 @@
             toast(I18N[lang].toastNew);
             return;
           }
-          const spec = levelToSpec(level);
+
+          const spec = levelToSpec(currentSize, currentDifficulty); // ✅ pass size + difficulty
           generateAndStartPuzzle({
             size: spec.size,
             givensTarget: spec.givens,
             uniqueness: spec.uniqueness,
             seed: null,
           });
+
           toast(I18N[lang].toastNew);
         }
 
@@ -2239,37 +2365,62 @@
           Sound.tap();
         }
 
-        // - Handle Grid
+        // - #Handle Grid
         const SUPPORTED_SIZES = [4, 6, 9];
-        const sizeSelect = document.getElementById("boardSize");
+        document.getElementById("boardSize").addEventListener("change", (e) => {
+          currentSize = parseInt(e.target.value, 10);
+          currentLevelIndex = 1;
+          setLevel(currentSize, currentDifficulty, currentLevelIndex);
+        });
 
-        sizeSelect.addEventListener("change", () => {
-          const newSize = Number(sizeSelect.value);
-          if (!SUPPORTED_SIZES.includes(newSize)) return;
+        // - #Handle Difficulty
+        document.querySelectorAll(".difficulty-tabs .tab").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            currentDifficulty = btn.dataset.level; // easy, normal, hard
+            currentLevelIndex = 1; // reset to first level
+            setLevel(currentSize, currentDifficulty, currentLevelIndex);
 
-          // reset to free mode
-          mode = "free";
-          level = 1;
-
-          // difficulty per size
-          const givens = newSize === 4 ? 10 : newSize === 6 ? 20 : 34;
-
-          updateLevelStringFromSpec(level, {
-            size: newSize,
-            label: `${newSize}×${newSize}`,
-            givens,
-            uniqueness: true,
+            document
+              .querySelectorAll(".difficulty-tabs .tab")
+              .forEach((t) => t.classList.remove("active"));
+            btn.classList.add("active");
           });
+        });
+
+        function setDifficulty(diff) {
+          let size;
+          let givens;
+
+          switch (diff) {
+            case "easy":
+              size = 4;
+              givens = 10;
+              break;
+
+            case "normal":
+              size = 6;
+              givens = 20;
+              break;
+
+            case "hard":
+              size = 9;
+              givens = 34;
+              break;
+          }
 
           generateAndStartPuzzle({
-            size: newSize,
+            size,
             givensTarget: givens,
             uniqueness: true,
             seed: null,
           });
-
-          persist();
-        });
+        }
+        function syncDifficultyTab(size) {
+          diffTabs.forEach((tab) => {
+            const map = { easy: 4, normal: 6, hard: 9 };
+            tab.classList.toggle("active", map[tab.dataset.diff] === size);
+          });
+        }
 
         // Events
         // el.btnReset.addEventListener("click", resetPuzzle);
@@ -2344,29 +2495,16 @@
 
           if (el.streak)
             el.streak.textContent = String(loadStreak().streak || 0);
+
           const resumed = restore();
           applyLang();
-          //   el.btnSound.innerHTML =
-          //     (Sound.enabled ? "🔊 " : "🔇 ") +
-          //     `<span>${I18N[lang].sound}</span>`;
 
-          buildLevelSelect();
+          buildLevelSelect(); // optional: populate level dropdown
 
-          if (resumed) {
-            updateLevelStringFromSpec(level, levelToSpec(level));
-            buildKeypad();
-            buildBoard();
-            updateHUD();
-            frogSay(mode === "daily" ? "daily" : null);
-            return;
-          }
-
-          if (mode === "daily") {
-            startDaily();
-          } else {
-            const store = loadStore();
-            const startLevel = store?.free?.currentLevel || 0;
-            setLevel(startLevel);
+          if (!resumed) {
+            currentSize = 4; // default 4x4
+            currentDifficulty = "easy"; // default difficulty
+            startPuzzle(currentSize, currentDifficulty);
           }
         }
 
