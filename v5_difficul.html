@@ -284,6 +284,9 @@
       .btn-hint-container > button > i {
         font-size: 20px;
       }
+      #t_hint {
+        color: var(--warn);
+      }
 
       .divider-line::after {
         content: "";
@@ -312,7 +315,7 @@
         border: 1px solid rgb(0 0 0 / 18%);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
-        padding: 20px 16px;
+        padding: 20px 14px;
       }
 
       .hud {
@@ -353,7 +356,8 @@
       .board-container {
         display: flex;
         flex-direction: column;
-        width: 100%;
+        /* min-width: 326px; */
+        /* width: 100%; */
       }
 
       .board {
@@ -365,6 +369,7 @@
       }
 
       .board-header {
+        min-width: 326px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -1739,41 +1744,19 @@
 
         function applyLang() {
           const T = I18N[lang];
-          // el.t_app.textContent = T.app;
           el.t_pause.textContent = T.pause;
-          // el.t_reset.textContent = T.reset;
           el.t_hint.textContent = T.hint;
           el.t_new.textContent = T.new;
-          //   el.t_mode.textContent = T.mode;
-          //   el.t_free.textContent = T.free;
-          //   el.t_daily.textContent = T.daily;
-          //   el.t_progress.textContent = T.progress;
+    
           el.t_mistakes.textContent = T.mistakes;
           el.t_times.textContent = T.times;
-          //   el.t_streak.textContent = T.streak;
-          //   el.t_sound.textContent = T.sound;
-          //   el.t_levelLabel.textContent = "🎚️ " + T.level;
-          //   el.t_go.textContent = T.go;
-          // el.tip.textContent = T.tip;
-          // el.rules.textContent = T.rules;
-          // el.integration.innerHTML = `<b>${T.integration1}</b> Single-file HTML. Uses <code>localStorage</code>.<br><br><b>${T.integration2}</b> Load as local asset in WebView.`;
-          el.t_close.textContent = T.close;
+           el.t_close.textContent = T.close;
           el.t_next.textContent = T.next;
           el.t_loading.textContent = T.loading;
           el.t_loading2.textContent = T.loading2;
-          // el.frogTitle.textContent = T.frogTitle;
-
           el.btnKM?.classList.toggle("active", lang === "km");
           el.btnEN?.classList.toggle("active", lang === "en");
-          //   el.modeLabel.textContent =
-          //     mode === "free" ? T.modeFreeLabel : T.modeDailyLabel;
-          //   el.btnSound.innerHTML =
-          //     (Sound.enabled ? "🔊 " : "🔇 ") + `<span>${T.sound}</span>`;
-
-          //   el.levelSelect.disabled = mode !== "free";
-          //   el.btnGoLevel.disabled = mode !== "free";
-          //   el.levelSelectBox.style.opacity = mode !== "free" ? "0.6" : "1";
-        }
+ }
 
         function computeProgress() {
           const N = cfg.N;
@@ -1783,32 +1766,8 @@
           return `${filled}/${N * N}`;
         }
         function updateHUD() {
-          //   el.progress.textContent = grid ? computeProgress() : "0/0";
-          el.mistakes.textContent = String(mistakes);
-          //   el.streak.textContent = String(loadStreak().streak || 0);
-          //   el.modeLabel.textContent =
-          //     mode === "free"
-          //       ? I18N[lang].modeFreeLabel
-          //       : I18N[lang].modeDailyLabel;
-        }
-
-        // function buildKeypad() {
-        //   const N = cfg.N;
-        //   el.keypad.innerHTML = "";
-        //   el.keypad.style.gridTemplateColumns = `repeat(5, 1fr) `;
-        //   for (let i = 1; i <= N; i++) {
-        //     const b = document.createElement("button");
-        //     b.className = "primary";
-        //     b.textContent = String(i);
-        //     b.addEventListener("click", () => setValue(i));
-        //     el.keypad.appendChild(b);
-        //   }
-        //   const bErase = document.createElement("button");
-        //   bErase.className = "small";
-        //   bErase.innerHTML = `⌫ `;
-        //   bErase.addEventListener("click", eraseValue);
-        //   el.keypad.appendChild(bErase);
-        // }
+          el.mistakes.textContent = String(mistakes)
+         }
 
         function buildKeypad() {
           el.keypad.innerHTML = "";
@@ -1864,9 +1823,7 @@
               ? `🔒 Level ${i} (${spec.label})`
               : `🍃 Level ${i} (${spec.label})`;
             opt.disabled = lock;
-            // el.levelSelect.appendChild(opt);
           }
-          //   el.levelSelect.value = String(Math.min(level, unlocked));
         }
 
         function buildBoard() {
@@ -1912,11 +1869,6 @@
             }
           }
 
-          //const cells = N * N;
-          // const container = document.getElementById('cells_container');
-          // const cells = document.querySelectorAll('#cells .cell.given');
-          // cells[1].style.setProperty('--line-h', `${container.clientHeight}px`);
-          // cells[1].classList.add('divider-line')
           const cellPerBlock = N % 2 === 0 ? 2 : 3;
           el.cells.style.setProperty("--n", N);
           el.cells.style.setProperty("--group", cellPerBlock);
